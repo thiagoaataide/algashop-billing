@@ -2,8 +2,9 @@ package com.algaworks.algashop.billing.domain.model.invoice;
 
 import com.algaworks.algashop.billing.domain.model.DomainException;
 import com.algaworks.algashop.billing.domain.model.IdGenerator;
+import jakarta.persistence.*;
 import lombok.*;
-import org.apache.tomcat.util.buf.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -19,13 +20,20 @@ public class PaymentSettings {
     private UUID uuid;
     private UUID creditCardId;
     private String gatewayCode;
-    private PaymentMehod paymentMethod;
 
-    static PaymentSettings brandNew(PaymentMehod method, UUID creditCardId) {
+    @Enumerated(EnumType.STRING)
+    private PaymentMethod paymentMethod;
+
+    @OneToOne(mappedBy = "paymentSettings")
+    @Getter(AccessLevel.PRIVATE)
+    @Setter(AccessLevel.PACKAGE)
+    private Invoice invoice;
+
+    static PaymentSettings brandNew(PaymentMethod method, UUID creditCardId) {
 
         Objects.requireNonNull(method);
 
-        if (method.equals(PaymentMehod.CREDIT_CARD)) {
+        if (method.equals(PaymentMethod.CREDIT_CARD)) {
             Objects.requireNonNull(creditCardId);
         }
 
@@ -33,11 +41,12 @@ public class PaymentSettings {
                 IdGenerator.generateTimeBasedUUID(),
                 creditCardId,
                 null,
-                method);
+                method,
+                null);
     }
 
-    void assignGetawayCode(String gatewayCode) {
-        if (gatewayCode.isBlank()) {
+    void assignGatewayCode(String gatewayCode) {
+        if (StringUtils.isBlank(gatewayCode)) {
             throw new IllegalArgumentException();
         }
 

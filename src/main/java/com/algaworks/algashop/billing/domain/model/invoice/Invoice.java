@@ -2,7 +2,9 @@ package com.algaworks.algashop.billing.domain.model.invoice;
 
 import com.algaworks.algashop.billing.domain.model.DomainException;
 import com.algaworks.algashop.billing.domain.model.IdGenerator;
+import jakarta.persistence.*;
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -13,8 +15,10 @@ import java.util.*;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
 public class Invoice {
 
+    @Id
     @EqualsAndHashCode.Include
     private UUID id;
     private String orderId;
@@ -26,8 +30,11 @@ public class Invoice {
     private OffsetDateTime expiresAt;
 
     private BigDecimal totalAmount;
+
+    @Enumerated(EnumType.STRING)
     private InvoiceStatus status;
 
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private PaymentSettings paymentSettings;
 
 
@@ -44,7 +51,7 @@ public class Invoice {
         Objects.requireNonNull(payer);
         Objects.requireNonNull(items);
 
-        if (orderId.isBlank()) {
+        if (StringUtils.isBlank(orderId)) {
             throw new IllegalArgumentException();
         }
 
@@ -113,19 +120,16 @@ public class Invoice {
             throw new DomainException(String.format("Invoice %s with status %s cannot be edited",
                     this.getId(), this.getStatus().toString().toLowerCase()));
         }
-        if (this.getPaymentSettings() == null) {
-            throw new DomainException("Invoice has no payment settings");
-        }
-
-        this.getPaymentSettings().assignGetawayCode(code);
+        this.getPaymentSettings().assignGatewayCode(code);
     }
 
-    public void changePaymentSettings(PaymentMehod method, UUID creditCardId) {
+    public void changePaymentSettings(PaymentMethod method, UUID creditCardId) {
         if (!isUnpaid()) {
             throw new DomainException(String.format("Invoice %s with status %s cannot be edited",
                     this.getId(), this.getStatus().toString().toLowerCase()));
         }
         PaymentSettings paymentSettings = PaymentSettings.brandNew(method, creditCardId);
+        paymentSettings.setInvoice(this);
         this.setPaymentSettings(paymentSettings);
     }
 }

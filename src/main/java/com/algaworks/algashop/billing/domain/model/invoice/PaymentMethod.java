@@ -1,6 +1,6 @@
 package com.algaworks.algashop.billing.domain.model.invoice;
 
-public enum PaymentMehod {
+public enum PaymentMethod {
     CREDIT_CARD,
     GATEWAY_BALANCE
 }
