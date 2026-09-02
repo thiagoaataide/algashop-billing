@@ -38,8 +38,13 @@ public class Invoice {
     private PaymentSettings paymentSettings;
 
 
+    @ElementCollection
+    @CollectionTable(name = "invoice_line_item",
+            joinColumns = @JoinColumn(name = "invoice_id")
+    )
     private Set<LineItem> items = new HashSet<>();
 
+    @Embedded
     private Payer payer;
 
     private String cancelReason;
